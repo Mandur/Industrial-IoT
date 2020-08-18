@@ -4,7 +4,7 @@
 
 ## Overview
 
-The Onboarding processor service is used to process discovery events from the OPC Discovery module resulting from a discovery scan.  The onboarding service is an event processor host that consumes messages from the `onboarding` constumer group and creates a IoT Hub Device Twins for each server and server endpoint using the IoT Hub Device Twin Registry.  
+The Onboarding processor service is used to process discovery events from the OPC Discovery module resulting from a discovery scan.  The onboarding service is an event processor host that consumes messages from the `onboarding` consumer group and creates a IoT Hub Device Twins for each server and server endpoint using the IoT Hub Device Twin Registry.  
 
 This involves the following tasks:
 
