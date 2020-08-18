@@ -60,6 +60,6 @@ The Registry Microservice provides REST APIs to activate and deactivate endpoint
 
 ## Next steps
 
-* [Learn about Registry Onboarding](onboarding.md)
+* [Learn about Registry Onboarding](processor-onboarding.md)
 * [Learn about the OPC Twin module](../modules/twin.md)
 * [Explore the Registry REST API](../api/registry/readme.md)
