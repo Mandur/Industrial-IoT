@@ -2,6 +2,9 @@ controller:
   ingressClass: nginx-<your alias>
   name: <your alias>-nginx
   watchNamespace: <your alias>-iiot
+  scope:
+    enabled: true
+    namespace: <your alias>-nginx-ingress
   replicaCount: 2
   nodeSelector:
     beta.kubernetes.io/os: linux
@@ -21,4 +24,4 @@ defaultBackend:
     beta.kubernetes.io/os: linux
 rbac:
   create: true
-  scope: false
+  scope: true
