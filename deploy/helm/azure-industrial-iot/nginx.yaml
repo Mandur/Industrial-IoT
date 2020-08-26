@@ -1,0 +1,21 @@
+controller:
+  ingressClass: nginx-<your alias>
+  name: <your alias>-nginx
+  watchNamespace: <your alias>-iiot
+  replicaCount: 2
+  nodeSelector:
+    beta.kubernetes.io/os: linux
+  service:
+    loadBalancerIP: 52.247.87.121
+    annotations:
+      service.beta.kubernetes.io/azure-dns-label-name: <your dns label>
+  config:
+    compute-full-forward-for: "true"
+    use-forward-headers: "true"
+    proxy-buffer-size: "32k"
+    client-header-buffer-size: "32k"
+  metrics:
+    enabled: true
+defaultBackend:
+  nodeSelector:
+    beta.kubernetes.io/os: linux
