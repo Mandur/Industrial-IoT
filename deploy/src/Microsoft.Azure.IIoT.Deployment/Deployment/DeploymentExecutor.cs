@@ -1128,7 +1128,7 @@ namespace Microsoft.Azure.IIoT.Deployment.Deployment {
             var aksCluster = await aksClusterCreationTask;
 
             // Create a PublicIP address in AKS node resource group
-            var aksPublicIpName = "aks-public-ip-mik";
+            var aksPublicIpName = $"aks-public-ip-{_configurationProvider.GetApplicationName()}";
             var aksPublicIpDomainNameLabel = _applicationName.ToLower();
 
             var aksPublicIp = await CreateAksPublicIPAsync(
