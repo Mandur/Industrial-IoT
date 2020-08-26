@@ -1,4 +1,6 @@
 controller:
+  admissionWebhooks:
+    enabled: false
   ingressClass: nginx-<your alias>
   name: <your alias>-nginx
   watchNamespace: <your alias>-iiot
