@@ -1,6 +1,4 @@
 controller:
-  admissionWebhooks:
-    enabled: false
   ingressClass: nginx-<your alias>
   name: <your alias>-nginx
   watchNamespace: <your alias>-iiot
@@ -23,4 +21,4 @@ defaultBackend:
     beta.kubernetes.io/os: linux
 rbac:
   create: true
-  scope: true
+  scope: false
