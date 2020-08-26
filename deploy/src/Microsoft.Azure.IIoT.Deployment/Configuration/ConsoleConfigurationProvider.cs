@@ -468,6 +468,13 @@ namespace Microsoft.Azure.IIoT.Deployment.Configuration {
             Console.Write("Do you want to delete registered Applications and the Resource Group ? ");
             return ChoisePrompt('Y', "yes", 'N', "no");
         }
+        public override (string aksName, string aksRgName) GetExistingAksInformation() {
+            if(_appSettings?.ExistingAks?.Name != null && _appSettings?.ExistingAks?.ResourceGroupName !=null) {
+                return ( _appSettings?.ExistingAks?.Name, _appSettings?.ExistingAks?.ResourceGroupName);
+            }
+            return (null, null);
+        }
+
 
         /// <summary>
         /// Read non-empty string from console.

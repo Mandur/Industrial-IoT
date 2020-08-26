@@ -73,5 +73,7 @@ namespace Microsoft.Azure.IIoT.Deployment.Configuration {
 
         /// <inheritdoc/>
         public abstract bool IfPerformCleanup();
+
+        public abstract (string aksName, string aksRgName) GetExistingAksInformation();
     }
 }

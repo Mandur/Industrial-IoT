@@ -831,13 +831,22 @@ namespace Microsoft.Azure.IIoT.Deployment.Deployment {
                 _defaultTagsDict
             );
 
-            var aksClusterCreationTask = _aksManagementClient
-                .CreateClusterAsync(
-                    _resourceGroup,
-                    _aksClusterName,
-                    clusterDefinition,
-                    cancellationToken
-                );
+            (string existingAksName, string existingAksRgName ) = _configurationProvider.GetExistingAksInformation();
+            Task<ManagedClusterInner> aksClusterCreationTask = null;
+            if (existingAksName == null || existingAksRgName == null) {
+                // No AKS cluster was sourced for deployment
+                aksClusterCreationTask = _aksManagementClient
+                    .CreateClusterAsync(
+                        _resourceGroup,
+                        _aksClusterName,
+                        clusterDefinition,
+                        cancellationToken
+                    );
+            }
+            else {
+                var resourceGroup = await _azureResourceManager.GetResourceGroupAsync(existingAksRgName);
+                aksClusterCreationTask = _aksManagementClient.GetClusterAsync(resourceGroup, existingAksName, cancellationToken);
+            }
 
             // Create Storage Account
             StorageAccountInner storageAccountGen2;
@@ -1119,7 +1128,7 @@ namespace Microsoft.Azure.IIoT.Deployment.Deployment {
             var aksCluster = await aksClusterCreationTask;
 
             // Create a PublicIP address in AKS node resource group
-            var aksPublicIpName = "aks-public-ip";
+            var aksPublicIpName = "aks-public-ip-mik";
             var aksPublicIpDomainNameLabel = _applicationName.ToLower();
 
             var aksPublicIp = await CreateAksPublicIPAsync(
@@ -1220,31 +1229,33 @@ namespace Microsoft.Azure.IIoT.Deployment.Deployment {
             // Wait a bit before starting the deployment.
             const int millisecondsDelay = 30 * 1000;
             await Task.Delay(millisecondsDelay);
+            if (existingAksName == null || existingAksRgName == null) {
 
-            const string jumpboxPublicIpName = "jumpbox-ip";
-            const string jumpboxNetworkInterfaceName = "jumpbox-networkInterface";
-            const string jumpboxVirtualMachineName = "jumpbox-vm";
 
-            var jumpboxUsername = "jumpboxuser";
-            var jumpboxPassword = Guid.NewGuid().ToString();
+                const string jumpboxPublicIpName = "jumpbox-ip";
+                const string jumpboxNetworkInterfaceName = "jumpbox-networkInterface";
+                const string jumpboxVirtualMachineName = "jumpbox-vm";
 
-            var aksRoleType = "AzureKubernetesServiceClusterAdminRole";
-            var aksRoleGuid = Guid.NewGuid();
-            var storageRoleType = "StorageBlobDataReader";
-            var storageRoleGuid = Guid.NewGuid();
+                var jumpboxUsername = "jumpboxuser";
+                var jumpboxPassword = Guid.NewGuid().ToString();
 
-            var helmSettings = _configurationProvider.GetHelmSettings();
-            // azure-industrial-iot Helm chart details
-            var helmRepoUrl = helmSettings?.RepoUrl ?? HelmSettings._defaultRepoUrl;
-            var helmChartVersion = helmSettings?.ChartVersion ?? HelmSettings._defaultChartVersion;
-            // azure-industrial-iot Helm chart values
-            var aiiotImageTag = helmSettings?.ImageTag ?? HelmSettings._defaultImageTag;
-            var aiiotTenantId = _authConf.TenantId.ToString();
-            var aiiotKeyVaultUri = keyVault.Properties.VaultUri;
-            var aiiotServicesAppId = _applicationsManager.GetServiceApplication().AppId;
-            var aiiotServicesAppSecret = _applicationsManager.GetServiceApplicationSecret();
+                var aksRoleType = "AzureKubernetesServiceClusterAdminRole";
+                var aksRoleGuid = Guid.NewGuid();
+                var storageRoleType = "StorageBlobDataReader";
+                var storageRoleGuid = Guid.NewGuid();
 
-            var jumpboxDeploymentParameters = new Dictionary<string, object> {
+                var helmSettings = _configurationProvider.GetHelmSettings();
+                // azure-industrial-iot Helm chart details
+                var helmRepoUrl = helmSettings?.RepoUrl ?? HelmSettings._defaultRepoUrl;
+                var helmChartVersion = helmSettings?.ChartVersion ?? HelmSettings._defaultChartVersion;
+                // azure-industrial-iot Helm chart values
+                var aiiotImageTag = helmSettings?.ImageTag ?? HelmSettings._defaultImageTag;
+                var aiiotTenantId = _authConf.TenantId.ToString();
+                var aiiotKeyVaultUri = keyVault.Properties.VaultUri;
+                var aiiotServicesAppId = _applicationsManager.GetServiceApplication().AppId;
+                var aiiotServicesAppSecret = _applicationsManager.GetServiceApplicationSecret();
+
+                var jumpboxDeploymentParameters = new Dictionary<string, object> {
                 {"nsgId", networkSecurityGroup.Id},
                 {"subnetId", virtualNetworkVmSubnet.Id},
                 {"aksClusterName", aksCluster.Name},
@@ -1277,37 +1288,38 @@ namespace Microsoft.Azure.IIoT.Deployment.Deployment {
                 {"aiiotServicesHostname", aksPublicIp.DnsSettings.Fqdn}
             };
 
-            var jumpboxDeployment = await _resourceManagementClient
-                .CreateResourceGroupDeploymentAsync(
-                    _resourceGroup,
-                    "jumpbox-vm",
-                    Resources.ArmTemplates.jumpbox_vm,
-                    jumpboxDeploymentParameters,
-                    DeploymentMode.Incremental,
-                    _defaultTagsDict,
-                    cancellationToken
-                );
+                var jumpboxDeployment = await _resourceManagementClient
+                    .CreateResourceGroupDeploymentAsync(
+                        _resourceGroup,
+                        "jumpbox-vm",
+                        Resources.ArmTemplates.jumpbox_vm,
+                        jumpboxDeploymentParameters,
+                        DeploymentMode.Incremental,
+                        _defaultTagsDict,
+                        cancellationToken
+                    );
 
-            var jumpboxDeploymentOutput = ResourceMgmtClient
-                .ExtractDeploymentOutput(jumpboxDeployment);
+                var jumpboxDeploymentOutput = ResourceMgmtClient
+                    .ExtractDeploymentOutput(jumpboxDeployment);
 
-            // Output jumpbox credentials so that users can login into it.
-            OutputJumpboxCredentials(jumpboxUsername, jumpboxPassword);
+                // Output jumpbox credentials so that users can login into it.
+                OutputJumpboxCredentials(jumpboxUsername, jumpboxPassword);
 
-            // Stop jumpbox.
-            var jumpboxVirtualMachine = await _computeManagementClient
-                .GetVMAsync(
-                    _resourceGroup,
-                    jumpboxVirtualMachineName,
-                    cancellationToken
-                );
-            await _computeManagementClient
-                .BeginDeallocateVMAsync(
-                    _resourceGroup,
-                    jumpboxVirtualMachine,
-                    cancellationToken
-                );
+                // Stop jumpbox.
+                var jumpboxVirtualMachine = await _computeManagementClient
+                    .GetVMAsync(
+                        _resourceGroup,
+                        jumpboxVirtualMachineName,
+                        cancellationToken
+                    );
+                await _computeManagementClient
+                    .BeginDeallocateVMAsync(
+                        _resourceGroup,
+                        jumpboxVirtualMachine,
+                        cancellationToken
+                    );
 
+            }
             // After we have endpoint for accessing Azure IIoT microservices we
             // will update client application to have Redirect URIs.
             // This will be performed in UpdateClientApplicationRedirectUrisAsync() call.

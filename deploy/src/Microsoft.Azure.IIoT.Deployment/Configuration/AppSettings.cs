@@ -39,5 +39,7 @@ namespace Microsoft.Azure.IIoT.Deployment.Configuration {
 
         /// <summary> Flag to determine whether to perform cleanup if deployment error occurs </summary>
         public bool? NoCleanup { get; set; }
+
+        public ExistingAksConfig ExistingAks { get; set; }
     }
 }

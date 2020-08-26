@@ -49,6 +49,8 @@ namespace Microsoft.Azure.IIoT.Deployment.Deployment {
         /// <returns></returns>
         bool IfUseExistingResourceGroup();
 
+        (string aksName, string aksRgName) GetExistingAksInformation();
+
         /// <summary>
         /// Select a resource group that should be used for deployment from a list of existing ones.
         /// </summary>
