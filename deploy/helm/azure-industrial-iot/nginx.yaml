@@ -6,9 +6,9 @@ controller:
   nodeSelector:
     beta.kubernetes.io/os: linux
   service:
-    loadBalancerIP: 52.247.87.121
+    loadBalancerIP: <your load balancer ip>
     annotations:
-      service.beta.kubernetes.io/azure-dns-label-name: <your dns label>
+      service.beta.kubernetes.io/azure-dns-label-name: <your dns labely>
   config:
     compute-full-forward-for: "true"
     use-forward-headers: "true"
